@@ -1,6 +1,45 @@
 object Main extends App {
   def printCards(c: Seq[Card]) = c.mkString(", ")
 
+
+  //tests
+
+  val flush = List(
+    Card(1, 1)
+  , Card(1, 2)
+  , Card(1, 3)
+  , Card(1, 4)
+  , Card(1, 5)
+  )
+  val four = List(
+    Card(1, 4)
+  , Card(1, 7)
+  , Card(1, 9)
+  , Card(1, 1)
+  , Card(2, 3)
+  )
+  val full = List(
+    Card(1, 4)
+  , Card(3, 4)
+  , Card(1, 9)
+  , Card(2, 9)
+  , Card(4, 9)
+  )
+
+println(flush.map(_.col).distinct.length == 1)
+val sortd = flush.sortBy(_.num).sliding(2)
+println(sortd)
+  //println(sortd.forall((l: Seq[Card]) => l(0) == l(1) - 1))
+
+
+  println( Hand.best(flush))
+  println( Hand.best(full))
+  println( Hand.best(four))
+
+
+  println("......")
+
+
   print("How many players (2-8) ? ")
   val nbPlayers = scala.io.StdIn.readInt
 
@@ -27,6 +66,27 @@ object Deck {
 
   def burn = deal(1)
   def deal(n: Int) = (1 to n).map { _ => cards.pop }
+}
+
+object Hand {
+  val hands = List(
+    ("Straight flush", (l:Seq[Card]) => l.map(_.col).distinct.length == 1 && l.sortBy(_.num).sliding(2).toList.forall((l: Seq[Card]) => l(0).num == l(1).num - 1))
+  , ("Four of a kind", (l:Seq[Card]) => l.groupBy(_.col).map(_._2.length).find(e => e >= 4).isDefined)
+  , ("Full House",     (l:Seq[Card]) => {
+                          (for {
+                            trp   <- triple(l)
+                            pair  <- pair(l diff trp)
+                          } yield (trp ++ pair)).map(_.length == 5).getOrElse(false)
+                        }
+    )
+  , ("shitty hand",    (_: Seq[Card]) => true)
+    )
+  def best(l: Seq[Card]) = {
+    println(hands.find(_._2(l)))
+  }
+
+  def triple(l: Seq[Card]): Option[Seq[Card]] = l.groupBy(_.num).find(_._2.length >= 3).map(_._2)
+  def pair(l: Seq[Card]): Option[Seq[Card]] = l.groupBy(_.num).find(_._2.length >= 2).map(_._2)
 }
 
 case class Card(col: Int, num: Int) {
